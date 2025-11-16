@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Ruleta Compartida</title>
+<style>
+    body { font-family: Arial; text-align: center; padding-top: 50px; background: #f0f0f0; }
+    #ruleta {
+        width: 300px; height: 300px; border-radius: 50%; border: 5px solid #333;
+        margin: 20px auto;
+        background: conic-gradient(#ff7675 0deg 90deg, #74b9ff 90deg 180deg, #55efc4 180deg 270deg, #ffeaa7 270deg 360deg);
+        transition: transform 4s ease-out;
+    }
+    #flecha {
+        width: 0; height: 0;
+        border-left: 20px solid transparent; border-right: 20px solid transparent;
+        border-bottom: 30px solid red; margin: 0 auto;
+    }
+    button { padding: 10px 20px; font-size: 16px; cursor: pointer; }
+</style>
+</head>
+<body>
+
+<h2>🎡 Ruleta Compartida</h2>
+<div id="flecha"></div>
+<div id="ruleta"></div>
+<button onclick="girar()">Girar</button>
+<h3 id="resultado">Conectando...</h3>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+<script>
+    // 🔧 REEMPLAZA ESTO CON TU CONFIGURACIÓN DE FIREBASE
+    const firebaseConfig = {
+      apiKey: "AQUI_TU_API_KEY",
+      authDomain: "AQUI_TU_PROYECTO.firebaseapp.com",
+      databaseURL: "https://AQUI_TU_PROYECTO-default-rtdb.firebaseio.com",
+      projectId: "AQUI_TU_PROYECTO",
+      storageBucket: "AQUI_TU_PROYECTO.appspot.com",
+      messagingSenderId: "AQUI_TU_ID",
+      appId: "AQUI_TU_APP_ID"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    let ruleta = document.getElementById("ruleta");
+    let resultado = document.getElementById("resultado");
+    let nombres = [];
+
+    // Leer nombres en tiempo real
+    db.ref("nombres").on("value", snap => {
+        nombres = snap.val();
+        if (!nombres || nombres.length === 0) {
+            resultado.innerHTML = "🎉 No quedan nombres.";
+        } else {
+            resultado.innerHTML = "Restantes: " + nombres.join(", ");
+        }
+    });
+
+    function girar() {
+        if (!nombres || nombres.length === 0) return;
+
+        let grados = Math.floor(Math.random() * 360) + 1440;
+        ruleta.style.transform = `rotate(${grados}deg)`;
+
+        setTimeout(() => {
+            let i = Math.floor(Math.random() * nombres.length);
+            let elegido = nombres[i];
+
+            resultado.innerHTML = "➡️ Seleccionado: <b>" + elegido + "</b>";
+
+            // Eliminar nombre de la base de datos
+            let nuevos = [...nombres];
+            nuevos.splice(i, 1);
+            db.ref("nombres").set(nuevos);
+
+        }, 4000);
+    }
+</script>
+
+</body>
+</html>
